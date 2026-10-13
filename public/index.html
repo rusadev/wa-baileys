@@ -252,6 +252,24 @@
       </div>
     </header>
 
+    <div class="card" style="margin-bottom:20px;">
+      <h2>API Key Dashboard</h2>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:10px;">
+        Semua endpoint <code>/api/*</code> memerlukan key. Tempel key dari file <code>.env</code> server, lalu simpan.
+        Aplikasi lain kirim header <code>X-API-Key</code> yang sama.
+      </p>
+      <div class="row-2">
+        <div>
+          <label for="apiKeyInput">X-API-Key</label>
+          <input type="password" id="apiKeyInput" placeholder="Tempel API_KEY di sini" autocomplete="off" />
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:10px;">
+          <button type="button" class="primary" style="width:auto;margin:0;" onclick="saveApiKey()">Simpan Key</button>
+          <span id="apiKeyStatus" style="font-size:0.85rem;color:var(--muted);"></span>
+        </div>
+      </div>
+    </div>
+
     <div class="grid">
       <div>
         <div class="card">
@@ -383,6 +401,49 @@
   </div>
 
   <script>
+    const API_KEY_STORAGE = 'wa_baileys_api_key';
+
+    function getApiKey() {
+      return localStorage.getItem(API_KEY_STORAGE) || '';
+    }
+
+    function apiHeaders(extra = {}) {
+      const headers = { ...extra };
+      const key = getApiKey();
+      if (key) headers['X-API-Key'] = key;
+      return headers;
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      const status = document.getElementById('apiKeyStatus');
+      if (!key) {
+        localStorage.removeItem(API_KEY_STORAGE);
+        status.textContent = 'Key dihapus';
+        status.style.color = 'var(--amber)';
+        return;
+      }
+      localStorage.setItem(API_KEY_STORAGE, key);
+      status.textContent = 'Key tersimpan di browser ini';
+      status.style.color = 'var(--green)';
+      pollStatus();
+      pollMessages();
+    }
+
+    function initApiKeyField() {
+      const input = document.getElementById('apiKeyInput');
+      const status = document.getElementById('apiKeyStatus');
+      const saved = getApiKey();
+      if (saved) {
+        input.value = saved;
+        status.textContent = 'Key tersimpan — request memakai X-API-Key';
+        status.style.color = 'var(--green)';
+      } else {
+        status.textContent = 'Belum ada key — isi dulu agar QR & API tidak 401';
+        status.style.color = 'var(--amber)';
+      }
+    }
+
     function switchTab(tab) {
       const isVerif = tab === 'verif';
       document.getElementById('verifForm').style.display = isVerif ? 'block' : 'none';
@@ -406,12 +467,19 @@
 
     async function pollStatus() {
       try {
-        const res = await fetch('/api/status');
+        const res = await fetch('/api/status', { headers: apiHeaders() });
         const data = await res.json();
-
         const badge = document.getElementById('statusBadge');
         const qrBox = document.getElementById('qrBox');
         const logoutBtn = document.getElementById('logoutBtn');
+
+        if (res.status === 401) {
+          badge.className = 'badge disconnected';
+          badge.textContent = '● Unauthorized';
+          qrBox.innerHTML = `<p style="color: var(--amber)">401 Unauthorized — isi <strong>API Key</strong> di atas lalu klik Simpan Key.</p>`;
+          logoutBtn.style.display = 'none';
+          return;
+        }
 
         if (data.queue) {
           document.getElementById('queuePending').textContent = data.queue.pending + ' pesan';
@@ -454,7 +522,8 @@
 
     async function pollMessages() {
       try {
-        const res = await fetch('/api/messages');
+        const res = await fetch('/api/messages', { headers: apiHeaders() });
+        if (!res.ok) return;
         const data = await res.json();
         const container = document.getElementById('msgList');
         if (!data.messages || data.messages.length === 0) return;
@@ -490,7 +559,7 @@
       try {
         const res = await fetch('/api/send-verification', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: apiHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -526,7 +595,7 @@
       try {
         const res = await fetch('/api/send-message', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: apiHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ phone, message })
         });
         const data = await res.json();
@@ -550,10 +619,11 @@
 
     async function logoutSession() {
       if (!confirm('Yakin ingin memutus sesi WhatsApp saat ini dan membuat QR baru?')) return;
-      await fetch('/api/logout', { method: 'POST' });
+      await fetch('/api/logout', { method: 'POST', headers: apiHeaders() });
       pollStatus();
     }
 
+    initApiKeyField();
     pollStatus();
     pollMessages();
     setInterval(pollStatus, 3000);
