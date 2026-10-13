@@ -1,9 +1,9 @@
 module.exports = {
   apps: [
     {
-      name: 'wa-baileys-ppra',
+      name: 'wa-baileys',
       script: './index.js',
-      cwd: '/Users/iqbaldev/Sites/wa-baileys',
+      cwd: '/var/www/wa.rusabyte.co.id',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -12,7 +12,7 @@ module.exports = {
       restart_delay: 3000,
       env: {
         NODE_ENV: 'production',
-        PORT: 3001,
+        PORT: 3012,
       },
     },
   ],
