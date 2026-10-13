@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WA Baileys Gateway — Anti-Ban Notification</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --green-hover: #16a34a;
+      --blue: #38bdf8;
+      --amber: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      font-size: 1.45rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .badge.shield { background: rgba(56, 189, 248, 0.15); color: var(--blue); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge.connected { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .badge.scan_qr { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .badge.connecting, .badge.disconnected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .grid {
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      margin-bottom: 14px;
+      color: #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 250px;
+      background: #0b1120;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .qr-box img {
+      width: 220px;
+      height: 220px;
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+    }
+    .user-info {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .user-info strong { color: var(--text); }
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .stat-box {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .stat-box strong {
+      display: block;
+      font-size: 1.1rem;
+      color: var(--text);
+      margin-top: 2px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    .tab-btn {
+      background: #0b1120;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    label {
+      display: block;
+      font-size: 0.83rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    input, textarea, select {
+      width: 100%;
+      background: #0b1120;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.92rem;
+      margin-bottom: 12px;
+    }
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+    button.primary {
+      background: var(--green);
+      color: #052e16;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      transition: background 0.15s;
+    }
+    button.primary:hover { background: var(--green-hover); }
+    button.danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      margin-top: 14px;
+      width: 100%;
+      padding: 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.danger:hover { background: rgba(239, 68, 68, 0.35); }
+    .alert {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      margin-top: 10px;
+      display: none;
+    }
+    .alert.ok { display: block; background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .alert.err { display: block; background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+    .msg-list {
+      max-height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg-item {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+    }
+    .msg-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    pre {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>💬 WA Baileys REST Gateway</h1>
+      <div class="header-badges">
+        <span class="badge shield">🛡️ Anti-Ban Queue & Auto-Unique Aktif</span>
+        <span id="statusBadge" class="badge connecting">Menghubungkan...</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Sesi Perangkat & QR Scanner</h2>
+          <div class="qr-box" id="qrBox">
+            <p style="color: var(--muted)">Memuat status sesi...</p>
+          </div>
+          <div class="stats-row">
+            <div class="stat-box">
+              Antrean Saat Ini
+              <strong id="queuePending">0 pesan</strong>
+            </div>
+            <div class="stat-box">
+              Total Terkirim
+              <strong id="queueTotal">0 pesan</strong>
+            </div>
+          </div>
+          <button id="logoutBtn" class="danger" style="display:none" onclick="logoutSession()">
+            Logout / Ganti Nomor WA
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Endpoint Notifikasi Verifikasi</h2>
+          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:8px;">
+            <code>POST /api/send-verification</code>
+          </p>
+          <pre>{
+  "phone": "081234567890",
+  "type": "request", // atau "result"
+  "nama": "dr. Budi Santoso",
+  "nomor": "VER-2026-089",
+  "jenis": "Verifikasi Hasil Lab",
+  "pemohon": "Andi Pratama",
+  "status": "disetujui",
+  "catatan": "Data sudah sesuai"
+}</pre>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="tabs">
+            <button class="tab-btn active" id="tabVerifBtn" onclick="switchTab('verif')">
+              📋 Tes Notifikasi Verifikasi (Anti-Spam)
+            </button>
+            <button class="tab-btn" id="tabCustomBtn" onclick="switchTab('custom')">
+              ✉️ Tes Pesan Bebas
+            </button>
+          </div>
+
+          <!-- Form Notifikasi Verifikasi -->
+          <form id="verifForm" onsubmit="sendVerificationTest(event)">
+            <div class="row-2">
+              <div>
+                <label>Nomor WA Tujuan</label>
+                <input type="text" id="vPhone" placeholder="081234567890" required />
+              </div>
+              <div>
+                <label>Jenis Notifikasi</label>
+                <select id="vType" onchange="toggleVerifFields()">
+                  <option value="request">🔔 Permintaan Verifikasi Baru</option>
+                  <option value="result">✅ Hasil Verifikasi</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div>
+                <label>Nama Penerima</label>
+                <input type="text" id="vNama" value="dr. Budi Santoso" required />
+              </div>
+              <div>
+                <label>Nomor Pengajuan / Tiket</label>
+                <input type="text" id="vNomor" value="VER-2026-0089" required />
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div>
+                <label>Perihal / Kategori Verifikasi</label>
+                <input type="text" id="vJenis" value="Verifikasi Hasil Laboratorium" required />
+              </div>
+              <div id="vActorWrap">
+                <label id="vActorLabel">Nama Pemohon</label>
+                <input type="text" id="vActor" value="Andi Pratama" required />
+              </div>
+            </div>
+
+            <div id="vStatusWrap" style="display:none;">
+              <label>Status Hasil Verifikasi</label>
+              <select id="vStatus">
+                <option value="disetujui">✅ Disetujui (Approved)</option>
+                <option value="revisi">⚠️ Perlu Perbaikan (Revisi)</option>
+                <option value="ditolak">❌ Ditolak (Rejected)</option>
+              </select>
+            </div>
+
+            <label>Catatan / Keterangan Tambahan (Opsional)</label>
+            <input type="text" id="vCatatan" value="Mohon segera ditindaklanjuti." />
+
+            <button type="submit" class="primary" id="vBtn">
+              Kirim Notifikasi Verifikasi (Dengan Simulasi Mengetik)
+            </button>
+            <div id="vAlert" class="alert"></div>
+          </form>
+
+          <!-- Form Pesan Bebas -->
+          <form id="customForm" style="display:none;" onsubmit="sendTestMessage(event)">
+            <label for="phone">Nomor Tujuan (08xx / 628xx)</label>
+            <input type="text" id="phone" placeholder="Contoh: 081234567890" required />
+
+            <label for="message">Isi Pesan (Otomatis ditambahkan Ref ID & Waktu Detik di bawahnya)</label>
+            <textarea id="message" rows="3" required>Halo! Ini pesan percobaan dari WA Baileys Gateway 🚀</textarea>
+
+            <button type="submit" class="primary" id="sendBtn">Kirim Pesan Sekarang</button>
+            <div id="sendAlert" class="alert"></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Log Pesan Terbaru (Live)</h2>
+          <div id="msgList" class="msg-list">
+            <p style="color: var(--muted); font-size: 0.85rem;">Belum ada aktivitas pesan.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      const isVerif = tab === 'verif';
+      document.getElementById('verifForm').style.display = isVerif ? 'block' : 'none';
+      document.getElementById('customForm').style.display = isVerif ? 'none' : 'block';
+      document.getElementById('tabVerifBtn').className = 'tab-btn ' + (isVerif ? 'active' : '');
+      document.getElementById('tabCustomBtn').className = 'tab-btn ' + (!isVerif ? 'active' : '');
+    }
+
+    function toggleVerifFields() {
+      const type = document.getElementById('vType').value;
+      const statusWrap = document.getElementById('vStatusWrap');
+      const actorLabel = document.getElementById('vActorLabel');
+      if (type === 'result') {
+        statusWrap.style.display = 'block';
+        actorLabel.textContent = 'Diverifikasi Oleh';
+      } else {
+        statusWrap.style.display = 'none';
+        actorLabel.textContent = 'Nama Pemohon';
+      }
+    }
+
+    async function pollStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+
+        const badge = document.getElementById('statusBadge');
+        const qrBox = document.getElementById('qrBox');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if (data.queue) {
+          document.getElementById('queuePending').textContent = data.queue.pending + ' pesan';
+          document.getElementById('queueTotal').textContent = data.queue.totalSent + ' pesan';
+        }
+
+        badge.className = 'badge ' + data.status;
+        const labels = {
+          connected: '● Terhubung',
+          scan_qr: '● Menunggu Scan QR',
+          connecting: '● Menghubungkan...',
+          disconnected: '● Terputus'
+        };
+        badge.textContent = labels[data.status] || data.status;
+
+        if (data.status === 'scan_qr' && data.qr) {
+          qrBox.innerHTML = `
+            <img src="${data.qr}" alt="WhatsApp QR Code" />
+            <p class="user-info">Buka WhatsApp di HP &rarr; <strong>Perangkat Tertaut</strong> &rarr; Scan QR ini</p>
+          `;
+          logoutBtn.style.display = 'none';
+        } else if (data.status === 'connected' && data.user) {
+          qrBox.innerHTML = `
+            <div style="font-size: 2.8rem; margin-bottom: 6px;">✅</div>
+            <p style="font-weight: 600; font-size: 1rem;">WhatsApp Aktif</p>
+            <p class="user-info">
+              Nama: <strong>${data.user.name}</strong><br/>
+              Nomor: <strong>+${data.user.phone}</strong>
+            </p>
+          `;
+          logoutBtn.style.display = 'block';
+        } else {
+          qrBox.innerHTML = `<p style="color: var(--muted)">Menyiapkan koneksi ke server WhatsApp...</p>`;
+          logoutBtn.style.display = 'none';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function pollMessages() {
+      try {
+        const res = await fetch('/api/messages');
+        const data = await res.json();
+        const container = document.getElementById('msgList');
+        if (!data.messages || data.messages.length === 0) return;
+
+        container.innerHTML = data.messages.map(m => `
+          <div class="msg-item"><div class="msg-meta"><span><strong>${m.fromMe ? '📤 Keluar ke' : '📥 Masuk dari'} ${m.from}</strong> (${m.pushName})</span><span>${new Date(m.timestamp).toLocaleTimeString('id-ID')}</span></div><div>${m.text.replace(/</g, '&lt;')}</div></div>
+        `).join('');
+      } catch (err) {}
+    }
+
+    async function sendVerificationTest(e) {
+      e.preventDefault();
+      const btn = document.getElementById('vBtn');
+      const alertBox = document.getElementById('vAlert');
+      const type = document.getElementById('vType').value;
+
+      const payload = {
+        phone: document.getElementById('vPhone').value,
+        type,
+        nama: document.getElementById('vNama').value,
+        nomor: document.getElementById('vNomor').value,
+        jenis: document.getElementById('vJenis').value,
+        pemohon: document.getElementById('vActor').value,
+        verifikator: document.getElementById('vActor').value,
+        status: document.getElementById('vStatus').value,
+        catatan: document.getElementById('vCatatan').value
+      };
+
+      btn.disabled = true;
+      btn.textContent = 'Mengetik & Mengirim (Simulasi Anti-Ban)...';
+      alertBox.className = 'alert';
+
+      try {
+        const res = await fetch('/api/send-verification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alertBox.className = 'alert ok';
+          alertBox.textContent = '✅ ' + data.message;
+          pollMessages();
+          pollStatus();
+        } else {
+          alertBox.className = 'alert err';
+          alertBox.textContent = '❌ ' + (data.message || 'Gagal mengirim notifikasi');
+        }
+      } catch (err) {
+        alertBox.className = 'alert err';
+        alertBox.textContent = '❌ Gagal menghubungi server';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Notifikasi Verifikasi (Dengan Simulasi Mengetik)';
+      }
+    }
+
+    async function sendTestMessage(e) {
+      e.preventDefault();
+      const btn = document.getElementById('sendBtn');
+      const alertBox = document.getElementById('sendAlert');
+      const phone = document.getElementById('phone').value;
+      const message = document.getElementById('message').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Mengetik & Mengirim...';
+      alertBox.className = 'alert';
+
+      try {
+        const res = await fetch('/api/send-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, message })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alertBox.className = 'alert ok';
+          alertBox.textContent = '✅ ' + data.message;
+          pollMessages();
+          pollStatus();
+        } else {
+          alertBox.className = 'alert err';
+          alertBox.textContent = '❌ ' + (data.message || 'Gagal mengirim pesan');
+        }
+      } catch (err) {
+        alertBox.className = 'alert err';
+        alertBox.textContent = '❌ Gagal menghubungi server';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Pesan Sekarang';
+      }
+    }
+
+    async function logoutSession() {
+      if (!confirm('Yakin ingin memutus sesi WhatsApp saat ini dan membuat QR baru?')) return;
+      await fetch('/api/logout', { method: 'POST' });
+      pollStatus();
+    }
+
+    pollStatus();
+    pollMessages();
+    setInterval(pollStatus, 3000);
+    setInterval(pollMessages, 4000);
+  </script>
+</body>
+</html>
