@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WA Baileys Gateway — Anti-Ban Notification</title>
+  <title>WA Baileys Gateway</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -12,7 +12,6 @@
       --text: #f8fafc;
       --muted: #94a3b8;
       --green: #22c55e;
-      --green-hover: #16a34a;
       --blue: #38bdf8;
       --amber: #f59e0b;
       --red: #ef4444;
@@ -22,612 +21,491 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding: 24px;
+      min-height: 100vh;
       line-height: 1.5;
     }
-    .container {
-      max-width: 1120px;
-      margin: 0 auto;
-    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
     }
-    header h1 {
-      font-size: 1.45rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .header-badges {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 9999px;
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-    .badge.shield { background: rgba(56, 189, 248, 0.15); color: var(--blue); border: 1px solid rgba(56, 189, 248, 0.3); }
-    .badge.connected { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-    .badge.scan_qr { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-    .badge.connecting, .badge.disconnected { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-    .grid {
-      display: grid;
-      grid-template-columns: 370px 1fr;
-      gap: 20px;
-    }
-    @media (max-width: 860px) {
-      .grid { grid-template-columns: 1fr; }
-    }
+    header h1 { font-size: 1.35rem; }
+    .muted { color: var(--muted); font-size: 0.85rem; }
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; margin-bottom: 16px;
     }
-    .card h2 {
-      font-size: 1.05rem;
-      margin-bottom: 14px;
-      color: #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .card h2 { font-size: 1.05rem; margin-bottom: 12px; }
+    label { display: block; font-size: 0.82rem; color: var(--muted); margin: 10px 0 6px; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: #0b1120; color: var(--text);
+      font-size: 0.95rem;
     }
+    textarea { min-height: 80px; resize: vertical; }
+    button, .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 10px 14px; border-radius: 8px; border: none;
+      cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    }
+    .btn-primary { background: var(--green); color: #052e16; }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-secondary { background: #334155; color: var(--text); }
+    .btn-danger { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+    .btn-blue { background: rgba(56,189,248,0.15); color: var(--blue); border: 1px solid rgba(56,189,248,0.35); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 720px) { .row-2 { grid-template-columns: 1fr; } }
+    .hidden { display: none !important; }
+    .alert { margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 0.88rem; }
+    .alert.ok { background: rgba(34,197,94,0.12); color: #86efac; }
+    .alert.err { background: rgba(239,68,68,0.12); color: #fca5a5; }
+    .badge {
+      display: inline-flex; padding: 4px 10px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .badge.connected { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .badge.scan_qr { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .badge.connecting, .badge.disconnected { background: rgba(239,68,68,0.15); color: #f87171; }
+    .device-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
+    }
+    .device-card { cursor: pointer; transition: border-color .15s; }
+    .device-card:hover { border-color: var(--blue); }
+    .device-card.active { border-color: var(--green); }
+    .auth-wrap { max-width: 420px; margin: 60px auto; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tabs button { flex: 1; }
+    .tabs button.active { background: var(--green); color: #052e16; }
     .qr-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 250px;
-      background: #0b1120;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
+      min-height: 220px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; background: #0b1120;
+      border-radius: 10px; padding: 16px; text-align: center;
     }
-    .qr-box img {
-      width: 220px;
-      height: 220px;
-      border-radius: 8px;
-      background: #fff;
-      padding: 8px;
-    }
-    .user-info {
-      margin-top: 12px;
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-    .user-info strong { color: var(--text); }
-    .stats-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .stat-box {
-      background: #0b1120;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-    .stat-box strong {
-      display: block;
-      font-size: 1.1rem;
-      color: var(--text);
-      margin-top: 2px;
-    }
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-    .tab-btn {
-      background: #0b1120;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      padding: 7px 14px;
-      border-radius: 8px;
-      font-size: 0.86rem;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      background: rgba(34, 197, 94, 0.15);
-      color: #4ade80;
-      border-color: rgba(34, 197, 94, 0.4);
-    }
-    label {
-      display: block;
-      font-size: 0.83rem;
-      color: var(--muted);
-      margin-bottom: 5px;
-    }
-    input, textarea, select {
-      width: 100%;
-      background: #0b1120;
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 0.92rem;
-      margin-bottom: 12px;
-    }
-    .row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--green);
-    }
-    button.primary {
-      background: var(--green);
-      color: #052e16;
-      font-weight: 600;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 0.92rem;
-      transition: background 0.15s;
-    }
-    button.primary:hover { background: var(--green-hover); }
-    button.danger {
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      margin-top: 14px;
-      width: 100%;
-      padding: 9px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    button.danger:hover { background: rgba(239, 68, 68, 0.35); }
-    .alert {
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 0.86rem;
-      margin-top: 10px;
-      display: none;
-    }
-    .alert.ok { display: block; background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-    .alert.err { display: block; background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
-    .msg-list {
-      max-height: 260px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .qr-box img { width: 220px; height: 220px; background: #fff; border-radius: 8px; }
+    .msg-list { max-height: 280px; overflow: auto; }
     .msg-item {
-      background: #0b1120;
-      border: 1px solid var(--border);
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      white-space: pre-wrap;
+      padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem;
     }
-    .msg-meta {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-bottom: 4px;
+    .key-box {
+      font-family: ui-monospace, monospace; font-size: 0.8rem;
+      word-break: break-all; background: #0b1120; padding: 10px;
+      border-radius: 8px; border: 1px dashed var(--border);
     }
-    pre {
-      background: #0b1120;
-      border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 0.78rem;
-      color: #cbd5e1;
-    }
+    .nav-user { font-size: 0.85rem; color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>💬 WA Baileys REST Gateway</h1>
-      <div class="header-badges">
-        <span class="badge shield">🛡️ Anti-Ban Queue & Auto-Unique Aktif</span>
-        <span id="statusBadge" class="badge connecting">Menghubungkan...</span>
-      </div>
-    </header>
-
-    <div class="card" style="margin-bottom:20px;">
-      <h2>API Key Dashboard</h2>
-      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:10px;">
-        Semua endpoint <code>/api/*</code> memerlukan key. Tempel key dari file <code>.env</code> server, lalu simpan.
-        Aplikasi lain kirim header <code>X-API-Key</code> yang sama.
-      </p>
-      <div class="row-2">
-        <div>
-          <label for="apiKeyInput">X-API-Key</label>
-          <input type="password" id="apiKeyInput" placeholder="Tempel API_KEY di sini" autocomplete="off" />
+    <!-- AUTH -->
+    <div id="authView" class="auth-wrap hidden">
+      <div class="card">
+        <h1 style="margin-bottom:8px;">WA Baileys Gateway</h1>
+        <p class="muted" id="authHint">Login untuk mengelola device WhatsApp.</p>
+        <div class="tabs" id="authTabs">
+          <button type="button" class="btn-secondary active" id="tabLogin" onclick="showAuthTab('login')">Login</button>
+          <button type="button" class="btn-secondary hidden" id="tabRegister" onclick="showAuthTab('register')">Daftar Super Admin</button>
         </div>
-        <div style="display:flex;align-items:flex-end;gap:10px;">
-          <button type="button" class="primary" style="width:auto;margin:0;" onclick="saveApiKey()">Simpan Key</button>
-          <span id="apiKeyStatus" style="font-size:0.85rem;color:var(--muted);"></span>
-        </div>
+        <form id="loginForm" onsubmit="doLogin(event)">
+          <label>Email</label>
+          <input type="email" id="loginEmail" required />
+          <label>Password</label>
+          <input type="password" id="loginPassword" required minlength="8" />
+          <div style="margin-top:14px;">
+            <button class="btn-primary" type="submit" style="width:100%;">Masuk</button>
+          </div>
+          <div id="loginAlert" class="alert hidden"></div>
+        </form>
+        <form id="registerForm" class="hidden" onsubmit="doRegister(event)">
+          <label>Nama</label>
+          <input type="text" id="regName" required />
+          <label>Email</label>
+          <input type="email" id="regEmail" required />
+          <label>Password (min. 8)</label>
+          <input type="password" id="regPassword" required minlength="8" />
+          <div style="margin-top:14px;">
+            <button class="btn-primary" type="submit" style="width:100%;">Buat Super Admin</button>
+          </div>
+          <div id="regAlert" class="alert hidden"></div>
+        </form>
       </div>
     </div>
 
-    <div class="grid">
-      <div>
+    <!-- APP -->
+    <div id="appView" class="hidden">
+      <header>
+        <div>
+          <h1>WA Baileys Gateway</h1>
+          <div class="nav-user" id="userLabel"></div>
+        </div>
+        <div class="row">
+          <button class="btn-secondary" type="button" onclick="showSection('devices')">Devices</button>
+          <button class="btn-secondary hidden" type="button" id="usersNavBtn" onclick="showSection('users')">Users</button>
+          <button class="btn-danger" type="button" onclick="doLogout()">Logout</button>
+        </div>
+      </header>
+
+      <!-- Devices list -->
+      <section id="devicesSection">
         <div class="card">
-          <h2>Sesi Perangkat & QR Scanner</h2>
-          <div class="qr-box" id="qrBox">
-            <p style="color: var(--muted)">Memuat status sesi...</p>
+          <div class="row" style="justify-content:space-between;margin-bottom:12px;">
+            <h2 style="margin:0;">Devices WhatsApp</h2>
+            <button class="btn-primary" type="button" onclick="createDevice()">+ Tambah Device</button>
           </div>
-          <div class="stats-row">
-            <div class="stat-box">
-              Antrean Saat Ini
-              <strong id="queuePending">0 pesan</strong>
-            </div>
-            <div class="stat-box">
-              Total Terkirim
-              <strong id="queueTotal">0 pesan</strong>
-            </div>
-          </div>
-          <button id="logoutBtn" class="danger" style="display:none" onclick="logoutSession()">
-            Logout / Ganti Nomor WA
-          </button>
+          <p class="muted" style="margin-bottom:12px;">Setiap device = 1 nomor WA + 1 API key unik untuk aplikasi eksternal.</p>
+          <div id="deviceGrid" class="device-grid"></div>
         </div>
 
-        <div class="card">
-          <h2>Endpoint Notifikasi Verifikasi</h2>
-          <p style="font-size:0.82rem; color:var(--muted); margin-bottom:8px;">
-            <code>POST /api/send-verification</code>
-          </p>
-          <pre>{
-  "phone": "081234567890",
-  "type": "request", // atau "result"
-  "nama": "dr. Budi Santoso",
-  "nomor": "VER-2026-089",
-  "jenis": "Verifikasi Hasil Lab",
-  "pemohon": "Andi Pratama",
-  "status": "disetujui",
-  "catatan": "Data sudah sesuai"
-}</pre>
-        </div>
-      </div>
-
-      <div>
-        <div class="card">
-          <div class="tabs">
-            <button class="tab-btn active" id="tabVerifBtn" onclick="switchTab('verif')">
-              📋 Tes Notifikasi Verifikasi (Anti-Spam)
-            </button>
-            <button class="tab-btn" id="tabCustomBtn" onclick="switchTab('custom')">
-              ✉️ Tes Pesan Bebas
-            </button>
+        <div id="deviceDetail" class="hidden">
+          <div class="card">
+            <div class="row" style="justify-content:space-between;margin-bottom:12px;">
+              <h2 style="margin:0;" id="detailTitle">Device</h2>
+              <span id="detailBadge" class="badge disconnected">—</span>
+            </div>
+            <div class="row-2">
+              <div>
+                <div class="qr-box" id="qrBox"><p class="muted">Memuat…</p></div>
+                <div class="row" style="margin-top:12px;">
+                  <button class="btn-danger" type="button" onclick="logoutDevice()">Logout / Ganti Nomor</button>
+                  <button class="btn-blue" type="button" onclick="regenKey()">Regenerate API Key</button>
+                  <button class="btn-danger" type="button" onclick="deleteDevice()">Hapus Device</button>
+                </div>
+                <div style="margin-top:14px;">
+                  <label>API Key (masked)</label>
+                  <div class="key-box" id="keyMasked">—</div>
+                  <div id="keyReveal" class="hidden" style="margin-top:8px;">
+                    <label>API Key baru — salin sekarang</label>
+                    <div class="key-box" id="keyFull"></div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h2>Tes Kirim Pesan</h2>
+                <form onsubmit="sendTest(event)">
+                  <label>Nomor tujuan</label>
+                  <input id="testPhone" placeholder="0812…" required />
+                  <label>Pesan</label>
+                  <textarea id="testMessage" required>Halo dari WA Baileys Gateway</textarea>
+                  <button class="btn-primary" type="submit" style="margin-top:12px;width:100%;">Kirim</button>
+                  <div id="testAlert" class="alert hidden"></div>
+                </form>
+                <h2 style="margin-top:20px;">Log pesan</h2>
+                <div id="msgList" class="msg-list muted">Belum ada aktivitas.</div>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <!-- Form Notifikasi Verifikasi -->
-          <form id="verifForm" onsubmit="sendVerificationTest(event)">
-            <div class="row-2">
-              <div>
-                <label>Nomor WA Tujuan</label>
-                <input type="text" id="vPhone" placeholder="081234567890" required />
-              </div>
-              <div>
-                <label>Jenis Notifikasi</label>
-                <select id="vType" onchange="toggleVerifFields()">
-                  <option value="request">🔔 Permintaan Verifikasi Baru</option>
-                  <option value="result">✅ Hasil Verifikasi</option>
-                </select>
-              </div>
+      <!-- Users (super admin) -->
+      <section id="usersSection" class="hidden">
+        <div class="card">
+          <h2>Manajemen Admin</h2>
+          <p class="muted" style="margin-bottom:12px;">Hanya super admin. Admin baru punya device sendiri.</p>
+          <form class="row-2" onsubmit="createAdmin(event)">
+            <div>
+              <label>Nama</label>
+              <input id="adminName" required />
             </div>
-
-            <div class="row-2">
-              <div>
-                <label>Nama Penerima</label>
-                <input type="text" id="vNama" value="dr. Budi Santoso" required />
-              </div>
-              <div>
-                <label>Nomor Pengajuan / Tiket</label>
-                <input type="text" id="vNomor" value="VER-2026-0089" required />
-              </div>
+            <div>
+              <label>Email</label>
+              <input type="email" id="adminEmail" required />
             </div>
-
-            <div class="row-2">
-              <div>
-                <label>Perihal / Kategori Verifikasi</label>
-                <input type="text" id="vJenis" value="Verifikasi Hasil Laboratorium" required />
-              </div>
-              <div id="vActorWrap">
-                <label id="vActorLabel">Nama Pemohon</label>
-                <input type="text" id="vActor" value="Andi Pratama" required />
-              </div>
+            <div>
+              <label>Password</label>
+              <input type="password" id="adminPassword" required minlength="8" />
             </div>
-
-            <div id="vStatusWrap" style="display:none;">
-              <label>Status Hasil Verifikasi</label>
-              <select id="vStatus">
-                <option value="disetujui">✅ Disetujui (Approved)</option>
-                <option value="revisi">⚠️ Perlu Perbaikan (Revisi)</option>
-                <option value="ditolak">❌ Ditolak (Rejected)</option>
-              </select>
+            <div style="display:flex;align-items:flex-end;">
+              <button class="btn-primary" type="submit" style="width:100%;">Tambah Admin</button>
             </div>
-
-            <label>Catatan / Keterangan Tambahan (Opsional)</label>
-            <input type="text" id="vCatatan" value="Mohon segera ditindaklanjuti." />
-
-            <button type="submit" class="primary" id="vBtn">
-              Kirim Notifikasi Verifikasi (Dengan Simulasi Mengetik)
-            </button>
-            <div id="vAlert" class="alert"></div>
           </form>
-
-          <!-- Form Pesan Bebas -->
-          <form id="customForm" style="display:none;" onsubmit="sendTestMessage(event)">
-            <label for="phone">Nomor Tujuan (08xx / 628xx)</label>
-            <input type="text" id="phone" placeholder="Contoh: 081234567890" required />
-
-            <label for="message">Isi Pesan (Otomatis ditambahkan Ref ID & Waktu Detik di bawahnya)</label>
-            <textarea id="message" rows="3" required>Halo! Ini pesan percobaan dari WA Baileys Gateway 🚀</textarea>
-
-            <button type="submit" class="primary" id="sendBtn">Kirim Pesan Sekarang</button>
-            <div id="sendAlert" class="alert"></div>
-          </form>
+          <div id="adminAlert" class="alert hidden"></div>
+          <div id="usersList" style="margin-top:16px;"></div>
         </div>
-
-        <div class="card">
-          <h2>Log Pesan Terbaru (Live)</h2>
-          <div id="msgList" class="msg-list">
-            <p style="color: var(--muted); font-size: 0.85rem;">Belum ada aktivitas pesan.</p>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   </div>
 
   <script>
-    const API_KEY_STORAGE = 'wa_baileys_api_key';
+    let currentUser = null;
+    let selectedDeviceId = null;
+    let pollTimer = null;
 
-    function getApiKey() {
-      return localStorage.getItem(API_KEY_STORAGE) || '';
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      return { res, data };
     }
 
-    function apiHeaders(extra = {}) {
-      const headers = { ...extra };
-      const key = getApiKey();
-      if (key) headers['X-API-Key'] = key;
-      return headers;
+    function show(el, on = true) {
+      document.getElementById(el).classList.toggle('hidden', !on);
     }
 
-    function saveApiKey() {
-      const key = document.getElementById('apiKeyInput').value.trim();
-      const status = document.getElementById('apiKeyStatus');
-      if (!key) {
-        localStorage.removeItem(API_KEY_STORAGE);
-        status.textContent = 'Key dihapus';
-        status.style.color = 'var(--amber)';
+    function setAlert(id, ok, msg) {
+      const el = document.getElementById(id);
+      el.className = 'alert ' + (ok ? 'ok' : 'err');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function showAuthTab(tab) {
+      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+    }
+
+    async function boot() {
+      const { data: bootData } = await api('/api/auth/bootstrap');
+      const regOpen = Boolean(bootData.registrationOpen);
+      document.getElementById('tabRegister').classList.toggle('hidden', !regOpen);
+      document.getElementById('authHint').textContent = regOpen
+        ? 'Belum ada pengguna. Daftarkan Super Admin pertama (pendaftaran akan ditutup setelahnya).'
+        : 'Login untuk mengelola device WhatsApp.';
+
+      const { res, data } = await api('/api/auth/me');
+      if (res.ok && data.user) {
+        currentUser = data.user;
+        enterApp();
+      } else {
+        show('authView', true);
+        show('appView', false);
+        if (regOpen) showAuthTab('register');
+      }
+    }
+
+    function enterApp() {
+      show('authView', false);
+      show('appView', true);
+      document.getElementById('userLabel').textContent =
+        `${currentUser.name} · ${currentUser.email} · ${currentUser.role}`;
+      document.getElementById('usersNavBtn').classList.toggle(
+        'hidden',
+        currentUser.role !== 'super_admin'
+      );
+      showSection('devices');
+      loadDevices();
+    }
+
+    function showSection(name) {
+      show('devicesSection', name === 'devices');
+      show('usersSection', name === 'users');
+      if (name === 'users') loadUsers();
+    }
+
+    async function doRegister(e) {
+      e.preventDefault();
+      const { res, data } = await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: document.getElementById('regName').value,
+          email: document.getElementById('regEmail').value,
+          password: document.getElementById('regPassword').value,
+        }),
+      });
+      if (!res.ok) return setAlert('regAlert', false, data.message || 'Gagal daftar');
+      currentUser = data.user;
+      if (data.migratedDevice?.apiKey) {
+        alert('Device lama dimigrasi.\nAPI Key:\n' + data.migratedDevice.apiKey);
+      }
+      enterApp();
+    }
+
+    async function doLogin(e) {
+      e.preventDefault();
+      const { res, data } = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: document.getElementById('loginEmail').value,
+          password: document.getElementById('loginPassword').value,
+        }),
+      });
+      if (!res.ok) return setAlert('loginAlert', false, data.message || 'Gagal login');
+      currentUser = data.user;
+      enterApp();
+    }
+
+    async function doLogout() {
+      await api('/api/auth/logout', { method: 'POST' });
+      currentUser = null;
+      selectedDeviceId = null;
+      if (pollTimer) clearInterval(pollTimer);
+      location.reload();
+    }
+
+    async function loadDevices() {
+      const { data } = await api('/api/devices');
+      const grid = document.getElementById('deviceGrid');
+      if (!data.devices?.length) {
+        grid.innerHTML = '<p class="muted">Belum ada device. Klik “Tambah Device”.</p>';
         return;
       }
-      localStorage.setItem(API_KEY_STORAGE, key);
-      status.textContent = 'Key tersimpan di browser ini';
-      status.style.color = 'var(--green)';
-      pollStatus();
-      pollMessages();
+      grid.innerHTML = data.devices.map((d) => `
+        <div class="card device-card ${d.id === selectedDeviceId ? 'active' : ''}" onclick="selectDevice('${d.id}')">
+          <div class="row" style="justify-content:space-between;">
+            <strong>${escapeHtml(d.name)}</strong>
+            <span class="badge ${d.status}">${d.status}</span>
+          </div>
+          <p class="muted" style="margin-top:8px;">
+            ${d.phone ? '+' + d.phone : 'Belum terhubung'}
+            ${d.ownerEmail && currentUser.role === 'super_admin' ? '<br/>Owner: ' + escapeHtml(d.ownerEmail) : ''}
+          </p>
+        </div>
+      `).join('');
     }
 
-    function initApiKeyField() {
-      const input = document.getElementById('apiKeyInput');
-      const status = document.getElementById('apiKeyStatus');
-      const saved = getApiKey();
-      if (saved) {
-        input.value = saved;
-        status.textContent = 'Key tersimpan — request memakai X-API-Key';
-        status.style.color = 'var(--green)';
+    async function createDevice() {
+      const name = prompt('Nama device', 'WhatsApp ' + new Date().toLocaleDateString('id-ID'));
+      if (!name) return;
+      const { res, data } = await api('/api/devices', {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) return alert(data.message || 'Gagal membuat device');
+      if (data.device?.apiKey) {
+        alert('Device dibuat. Simpan API Key ini:\n\n' + data.device.apiKey);
+      }
+      await loadDevices();
+      selectDevice(data.device.id);
+    }
+
+    async function selectDevice(id) {
+      selectedDeviceId = id;
+      show('deviceDetail', true);
+      await loadDevices();
+      await pollDevice();
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(pollDevice, 3000);
+    }
+
+    async function pollDevice() {
+      if (!selectedDeviceId) return;
+      const { res, data } = await api(`/api/devices/${selectedDeviceId}/status`);
+      if (!res.ok) return;
+      const { data: detail } = await api(`/api/devices/${selectedDeviceId}`);
+      const d = detail.device || {};
+      document.getElementById('detailTitle').textContent = d.name || 'Device';
+      const badge = document.getElementById('detailBadge');
+      badge.className = 'badge ' + data.status;
+      badge.textContent = data.status;
+      document.getElementById('keyMasked').textContent = d.apiKeyMasked || '—';
+
+      const qrBox = document.getElementById('qrBox');
+      if (data.status === 'scan_qr' && data.qr) {
+        qrBox.innerHTML = `<img src="${data.qr}" alt="QR" /><p class="muted" style="margin-top:8px;">Scan dengan WhatsApp → Perangkat Tertaut</p>`;
+      } else if (data.status === 'connected' && data.user) {
+        qrBox.innerHTML = `<div style="font-size:2.5rem;">✅</div><p><strong>${escapeHtml(data.user.name)}</strong><br/>+${escapeHtml(data.user.phone)}</p>`;
       } else {
-        status.textContent = 'Belum ada key — isi dulu agar QR & API tidak 401';
-        status.style.color = 'var(--amber)';
+        qrBox.innerHTML = `<p class="muted">Status: ${escapeHtml(data.status)}</p>`;
       }
-    }
 
-    function switchTab(tab) {
-      const isVerif = tab === 'verif';
-      document.getElementById('verifForm').style.display = isVerif ? 'block' : 'none';
-      document.getElementById('customForm').style.display = isVerif ? 'none' : 'block';
-      document.getElementById('tabVerifBtn').className = 'tab-btn ' + (isVerif ? 'active' : '');
-      document.getElementById('tabCustomBtn').className = 'tab-btn ' + (!isVerif ? 'active' : '');
-    }
-
-    function toggleVerifFields() {
-      const type = document.getElementById('vType').value;
-      const statusWrap = document.getElementById('vStatusWrap');
-      const actorLabel = document.getElementById('vActorLabel');
-      if (type === 'result') {
-        statusWrap.style.display = 'block';
-        actorLabel.textContent = 'Diverifikasi Oleh';
+      const { data: msgs } = await api(`/api/devices/${selectedDeviceId}/messages`);
+      const list = document.getElementById('msgList');
+      if (!msgs.messages?.length) {
+        list.innerHTML = '<p class="muted">Belum ada aktivitas.</p>';
       } else {
-        statusWrap.style.display = 'none';
-        actorLabel.textContent = 'Nama Pemohon';
-      }
-    }
-
-    async function pollStatus() {
-      try {
-        const res = await fetch('/api/status', { headers: apiHeaders() });
-        const data = await res.json();
-        const badge = document.getElementById('statusBadge');
-        const qrBox = document.getElementById('qrBox');
-        const logoutBtn = document.getElementById('logoutBtn');
-
-        if (res.status === 401) {
-          badge.className = 'badge disconnected';
-          badge.textContent = '● Unauthorized';
-          qrBox.innerHTML = `<p style="color: var(--amber)">401 Unauthorized — isi <strong>API Key</strong> di atas lalu klik Simpan Key.</p>`;
-          logoutBtn.style.display = 'none';
-          return;
-        }
-
-        if (data.queue) {
-          document.getElementById('queuePending').textContent = data.queue.pending + ' pesan';
-          document.getElementById('queueTotal').textContent = data.queue.totalSent + ' pesan';
-        }
-
-        badge.className = 'badge ' + data.status;
-        const labels = {
-          connected: '● Terhubung',
-          scan_qr: '● Menunggu Scan QR',
-          connecting: '● Menghubungkan...',
-          disconnected: '● Terputus'
-        };
-        badge.textContent = labels[data.status] || data.status;
-
-        if (data.status === 'scan_qr' && data.qr) {
-          qrBox.innerHTML = `
-            <img src="${data.qr}" alt="WhatsApp QR Code" />
-            <p class="user-info">Buka WhatsApp di HP &rarr; <strong>Perangkat Tertaut</strong> &rarr; Scan QR ini</p>
-          `;
-          logoutBtn.style.display = 'none';
-        } else if (data.status === 'connected' && data.user) {
-          qrBox.innerHTML = `
-            <div style="font-size: 2.8rem; margin-bottom: 6px;">✅</div>
-            <p style="font-weight: 600; font-size: 1rem;">WhatsApp Aktif</p>
-            <p class="user-info">
-              Nama: <strong>${data.user.name}</strong><br/>
-              Nomor: <strong>+${data.user.phone}</strong>
-            </p>
-          `;
-          logoutBtn.style.display = 'block';
-        } else {
-          qrBox.innerHTML = `<p style="color: var(--muted)">Menyiapkan koneksi ke server WhatsApp...</p>`;
-          logoutBtn.style.display = 'none';
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    async function pollMessages() {
-      try {
-        const res = await fetch('/api/messages', { headers: apiHeaders() });
-        if (!res.ok) return;
-        const data = await res.json();
-        const container = document.getElementById('msgList');
-        if (!data.messages || data.messages.length === 0) return;
-
-        container.innerHTML = data.messages.map(m => `
-          <div class="msg-item"><div class="msg-meta"><span><strong>${m.fromMe ? '📤 Keluar ke' : '📥 Masuk dari'} ${m.from}</strong> (${m.pushName})</span><span>${new Date(m.timestamp).toLocaleTimeString('id-ID')}</span></div><div>${m.text.replace(/</g, '&lt;')}</div></div>
+        list.innerHTML = msgs.messages.map((m) => `
+          <div class="msg-item">
+            <div class="row" style="justify-content:space-between;">
+              <strong>${m.fromMe ? '📤' : '📥'} ${escapeHtml(m.from)}</strong>
+              <span class="muted">${new Date(m.timestamp).toLocaleTimeString('id-ID')}</span>
+            </div>
+            <div>${escapeHtml(m.text)}</div>
+          </div>
         `).join('');
-      } catch (err) {}
-    }
-
-    async function sendVerificationTest(e) {
-      e.preventDefault();
-      const btn = document.getElementById('vBtn');
-      const alertBox = document.getElementById('vAlert');
-      const type = document.getElementById('vType').value;
-
-      const payload = {
-        phone: document.getElementById('vPhone').value,
-        type,
-        nama: document.getElementById('vNama').value,
-        nomor: document.getElementById('vNomor').value,
-        jenis: document.getElementById('vJenis').value,
-        pemohon: document.getElementById('vActor').value,
-        verifikator: document.getElementById('vActor').value,
-        status: document.getElementById('vStatus').value,
-        catatan: document.getElementById('vCatatan').value
-      };
-
-      btn.disabled = true;
-      btn.textContent = 'Mengetik & Mengirim (Simulasi Anti-Ban)...';
-      alertBox.className = 'alert';
-
-      try {
-        const res = await fetch('/api/send-verification', {
-          method: 'POST',
-          headers: apiHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alertBox.className = 'alert ok';
-          alertBox.textContent = '✅ ' + data.message;
-          pollMessages();
-          pollStatus();
-        } else {
-          alertBox.className = 'alert err';
-          alertBox.textContent = '❌ ' + (data.message || 'Gagal mengirim notifikasi');
-        }
-      } catch (err) {
-        alertBox.className = 'alert err';
-        alertBox.textContent = '❌ Gagal menghubungi server';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Kirim Notifikasi Verifikasi (Dengan Simulasi Mengetik)';
       }
     }
 
-    async function sendTestMessage(e) {
+    async function logoutDevice() {
+      if (!selectedDeviceId || !confirm('Reset sesi WhatsApp device ini?')) return;
+      await api(`/api/devices/${selectedDeviceId}/logout`, { method: 'POST' });
+      pollDevice();
+    }
+
+    async function regenKey() {
+      if (!selectedDeviceId || !confirm('Generate API key baru? Key lama langsung invalid.')) return;
+      const { res, data } = await api(`/api/devices/${selectedDeviceId}/regenerate-key`, { method: 'POST' });
+      if (!res.ok) return alert(data.message || 'Gagal');
+      document.getElementById('keyReveal').classList.remove('hidden');
+      document.getElementById('keyFull').textContent = data.device.apiKey;
+      document.getElementById('keyMasked').textContent = data.device.apiKeyMasked;
+    }
+
+    async function deleteDevice() {
+      if (!selectedDeviceId || !confirm('Hapus device ini permanen?')) return;
+      await api(`/api/devices/${selectedDeviceId}`, { method: 'DELETE' });
+      selectedDeviceId = null;
+      if (pollTimer) clearInterval(pollTimer);
+      show('deviceDetail', false);
+      loadDevices();
+    }
+
+    async function sendTest(e) {
       e.preventDefault();
-      const btn = document.getElementById('sendBtn');
-      const alertBox = document.getElementById('sendAlert');
-      const phone = document.getElementById('phone').value;
-      const message = document.getElementById('message').value;
+      const { res, data } = await api(`/api/devices/${selectedDeviceId}/send-message`, {
+        method: 'POST',
+        body: JSON.stringify({
+          phone: document.getElementById('testPhone').value,
+          message: document.getElementById('testMessage').value,
+        }),
+      });
+      setAlert('testAlert', res.ok, data.message || (res.ok ? 'Terkirim' : 'Gagal'));
+      pollDevice();
+    }
 
-      btn.disabled = true;
-      btn.textContent = 'Mengetik & Mengirim...';
-      alertBox.className = 'alert';
+    async function loadUsers() {
+      const { data } = await api('/api/users');
+      const el = document.getElementById('usersList');
+      el.innerHTML = (data.users || []).map((u) => `
+        <div class="card" style="padding:12px;margin-bottom:8px;">
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <strong>${escapeHtml(u.name)}</strong>
+              <div class="muted">${escapeHtml(u.email)} · ${u.role}</div>
+            </div>
+            ${u.role !== 'super_admin' ? `<button class="btn-danger" type="button" onclick="deleteAdmin('${u.id}')">Hapus</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
 
-      try {
-        const res = await fetch('/api/send-message', {
-          method: 'POST',
-          headers: apiHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ phone, message })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alertBox.className = 'alert ok';
-          alertBox.textContent = '✅ ' + data.message;
-          pollMessages();
-          pollStatus();
-        } else {
-          alertBox.className = 'alert err';
-          alertBox.textContent = '❌ ' + (data.message || 'Gagal mengirim pesan');
-        }
-      } catch (err) {
-        alertBox.className = 'alert err';
-        alertBox.textContent = '❌ Gagal menghubungi server';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Kirim Pesan Sekarang';
+    async function createAdmin(e) {
+      e.preventDefault();
+      const { res, data } = await api('/api/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: document.getElementById('adminName').value,
+          email: document.getElementById('adminEmail').value,
+          password: document.getElementById('adminPassword').value,
+        }),
+      });
+      setAlert('adminAlert', res.ok, data.message || (res.ok ? 'Admin dibuat' : 'Gagal'));
+      if (res.ok) {
+        e.target.reset();
+        loadUsers();
       }
     }
 
-    async function logoutSession() {
-      if (!confirm('Yakin ingin memutus sesi WhatsApp saat ini dan membuat QR baru?')) return;
-      await fetch('/api/logout', { method: 'POST', headers: apiHeaders() });
-      pollStatus();
+    async function deleteAdmin(id) {
+      if (!confirm('Hapus admin ini?')) return;
+      await api(`/api/users/${id}`, { method: 'DELETE' });
+      loadUsers();
     }
 
-    initApiKeyField();
-    pollStatus();
-    pollMessages();
-    setInterval(pollStatus, 3000);
-    setInterval(pollMessages, 4000);
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    boot();
   </script>
 </body>
 </html>
