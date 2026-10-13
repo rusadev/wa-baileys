@@ -75,9 +75,15 @@
     .device-card:hover { border-color: var(--blue); }
     .device-card.active { border-color: var(--green); }
     .auth-wrap { max-width: 420px; margin: 60px auto; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tabs button { flex: 1; }
-    .tabs button.active { background: var(--green); color: #052e16; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tabs button, .tab-btn { flex: 1; min-width: 140px; background: #334155; color: var(--text); border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .tabs button.active, .tab-btn.active { background: var(--green); color: #052e16; }
+    button.primary, .btn-primary { background: var(--green); color: #052e16; width: 100%; margin-top: 12px; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    select {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: #0b1120; color: var(--text);
+      font-size: 0.95rem;
+    }
     .qr-box {
       min-height: 220px; display: flex; flex-direction: column;
       align-items: center; justify-content: center; background: #0b1120;
@@ -181,15 +187,74 @@
                 </div>
               </div>
               <div>
-                <h2>Tes Kirim Pesan</h2>
-                <form onsubmit="sendTest(event)">
-                  <label>Nomor tujuan</label>
-                  <input id="testPhone" placeholder="0812…" required />
-                  <label>Pesan</label>
-                  <textarea id="testMessage" required>Halo dari WA Baileys Gateway</textarea>
-                  <button class="btn-primary" type="submit" style="margin-top:12px;width:100%;">Kirim</button>
-                  <div id="testAlert" class="alert hidden"></div>
+                <div class="tabs">
+                  <button type="button" class="tab-btn active" id="tabVerifBtn" onclick="switchSendTab('verif')">
+                    Notifikasi Verifikasi
+                  </button>
+                  <button type="button" class="tab-btn" id="tabCustomBtn" onclick="switchSendTab('custom')">
+                    Pesan Bebas
+                  </button>
+                </div>
+
+                <form id="verifForm" onsubmit="sendVerificationTest(event)">
+                  <div class="row-2">
+                    <div>
+                      <label>Nomor WA Tujuan</label>
+                      <input type="text" id="vPhone" placeholder="081234567890" required />
+                    </div>
+                    <div>
+                      <label>Jenis Notifikasi</label>
+                      <select id="vType" onchange="toggleVerifFields()">
+                        <option value="request">Permintaan Verifikasi Baru</option>
+                        <option value="result">Hasil Verifikasi</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row-2">
+                    <div>
+                      <label>Nama Penerima</label>
+                      <input type="text" id="vNama" value="dr. Budi Santoso" required />
+                    </div>
+                    <div>
+                      <label>Nomor Pengajuan / Tiket</label>
+                      <input type="text" id="vNomor" value="VER-2026-0089" required />
+                    </div>
+                  </div>
+                  <div class="row-2">
+                    <div>
+                      <label>Perihal / Kategori Verifikasi</label>
+                      <input type="text" id="vJenis" value="Verifikasi Hasil Laboratorium" required />
+                    </div>
+                    <div id="vActorWrap">
+                      <label id="vActorLabel">Nama Pemohon</label>
+                      <input type="text" id="vActor" value="Andi Pratama" required />
+                    </div>
+                  </div>
+                  <div id="vStatusWrap" style="display:none;">
+                    <label>Status Hasil Verifikasi</label>
+                    <select id="vStatus">
+                      <option value="disetujui">Disetujui (Approved)</option>
+                      <option value="revisi">Perlu Perbaikan (Revisi)</option>
+                      <option value="ditolak">Ditolak (Rejected)</option>
+                    </select>
+                  </div>
+                  <label>Catatan / Keterangan Tambahan (Opsional)</label>
+                  <input type="text" id="vCatatan" value="Mohon segera ditindaklanjuti." />
+                  <button type="submit" class="primary" id="vBtn">
+                    Kirim Notifikasi Verifikasi
+                  </button>
+                  <div id="vAlert" class="alert hidden"></div>
                 </form>
+
+                <form id="customForm" class="hidden" onsubmit="sendTestMessage(event)">
+                  <label for="phone">Nomor Tujuan (08xx / 628xx)</label>
+                  <input type="text" id="phone" placeholder="Contoh: 081234567890" required />
+                  <label for="message">Isi Pesan (otomatis ditambah Ref ID & waktu)</label>
+                  <textarea id="message" rows="3" required>Halo! Ini pesan percobaan dari WA Baileys Gateway</textarea>
+                  <button type="submit" class="primary" id="sendBtn">Kirim Pesan Sekarang</button>
+                  <div id="sendAlert" class="alert hidden"></div>
+                </form>
+
                 <h2 style="margin-top:20px;">Log pesan</h2>
                 <div id="msgList" class="msg-list muted">Belum ada aktivitas.</div>
               </div>
@@ -445,17 +510,82 @@
       loadDevices();
     }
 
-    async function sendTest(e) {
+    function switchSendTab(tab) {
+      const isVerif = tab === 'verif';
+      document.getElementById('verifForm').classList.toggle('hidden', !isVerif);
+      document.getElementById('customForm').classList.toggle('hidden', isVerif);
+      document.getElementById('tabVerifBtn').classList.toggle('active', isVerif);
+      document.getElementById('tabCustomBtn').classList.toggle('active', !isVerif);
+    }
+
+    function toggleVerifFields() {
+      const type = document.getElementById('vType').value;
+      document.getElementById('vStatusWrap').style.display =
+        type === 'result' ? 'block' : 'none';
+      document.getElementById('vActorLabel').textContent =
+        type === 'result' ? 'Diverifikasi Oleh' : 'Nama Pemohon';
+    }
+
+    async function sendVerificationTest(e) {
       e.preventDefault();
-      const { res, data } = await api(`/api/devices/${selectedDeviceId}/send-message`, {
-        method: 'POST',
-        body: JSON.stringify({
-          phone: document.getElementById('testPhone').value,
-          message: document.getElementById('testMessage').value,
-        }),
-      });
-      setAlert('testAlert', res.ok, data.message || (res.ok ? 'Terkirim' : 'Gagal'));
-      pollDevice();
+      if (!selectedDeviceId) return alert('Pilih device dulu');
+      const btn = document.getElementById('vBtn');
+      const type = document.getElementById('vType').value;
+      btn.disabled = true;
+      btn.textContent = 'Mengetik & Mengirim...';
+      try {
+        const { res, data } = await api(
+          `/api/devices/${selectedDeviceId}/send-verification`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              phone: document.getElementById('vPhone').value,
+              type,
+              nama: document.getElementById('vNama').value,
+              nomor: document.getElementById('vNomor').value,
+              jenis: document.getElementById('vJenis').value,
+              pemohon: document.getElementById('vActor').value,
+              verifikator: document.getElementById('vActor').value,
+              status: document.getElementById('vStatus').value,
+              catatan: document.getElementById('vCatatan').value,
+            }),
+          }
+        );
+        setAlert('vAlert', res.ok && data.success, data.message || (res.ok ? 'Terkirim' : 'Gagal'));
+        pollDevice();
+      } catch (_) {
+        setAlert('vAlert', false, 'Gagal menghubungi server');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Notifikasi Verifikasi';
+      }
+    }
+
+    async function sendTestMessage(e) {
+      e.preventDefault();
+      if (!selectedDeviceId) return alert('Pilih device dulu');
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      btn.textContent = 'Mengetik & Mengirim...';
+      try {
+        const { res, data } = await api(
+          `/api/devices/${selectedDeviceId}/send-message`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              phone: document.getElementById('phone').value,
+              message: document.getElementById('message').value,
+            }),
+          }
+        );
+        setAlert('sendAlert', res.ok && data.success, data.message || (res.ok ? 'Terkirim' : 'Gagal'));
+        pollDevice();
+      } catch (_) {
+        setAlert('sendAlert', false, 'Gagal menghubungi server');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Pesan Sekarang';
+      }
     }
 
     async function loadUsers() {
