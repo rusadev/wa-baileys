@@ -179,10 +179,21 @@
                 </div>
                 <div style="margin-top:14px;">
                   <label>API Key (masked)</label>
-                  <div class="key-box" id="keyMasked">—</div>
+                  <div class="row" style="gap:8px;align-items:stretch;">
+                    <div class="key-box" id="keyMasked" style="flex:1;margin:0;">—</div>
+                    <button class="btn-blue" type="button" style="white-space:nowrap;" onclick="copyApiKey()" id="copyKeyBtn">
+                      Salin Key
+                    </button>
+                  </div>
                   <div id="keyReveal" class="hidden" style="margin-top:8px;">
-                    <label>API Key baru — salin sekarang</label>
-                    <div class="key-box" id="keyFull"></div>
+                    <label>API Key lengkap</label>
+                    <div class="row" style="gap:8px;align-items:stretch;">
+                      <div class="key-box" id="keyFull" style="flex:1;margin:0;"></div>
+                      <button class="btn-secondary" type="button" style="white-space:nowrap;" onclick="copyTextFrom('keyFull')">
+                        Salin
+                      </button>
+                    </div>
+                    <p class="muted" id="copyKeyStatus" style="margin-top:6px;"></p>
                   </div>
                 </div>
               </div>
@@ -492,6 +503,62 @@
       pollDevice();
     }
 
+    async function copyToClipboard(text) {
+      if (!text) return false;
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (_) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    function copyTextFrom(elId) {
+      const text = document.getElementById(elId)?.textContent?.trim();
+      copyToClipboard(text).then((ok) => {
+        const status = document.getElementById('copyKeyStatus');
+        status.textContent = ok ? 'API key tersalin ke clipboard.' : 'Gagal menyalin.';
+        status.style.color = ok ? 'var(--green)' : 'var(--red)';
+      });
+    }
+
+    async function copyApiKey() {
+      if (!selectedDeviceId) return;
+      const btn = document.getElementById('copyKeyBtn');
+      btn.disabled = true;
+      btn.textContent = 'Menyalin…';
+      try {
+        const { res, data } = await api(
+          `/api/devices/${selectedDeviceId}/reveal-key`,
+          { method: 'POST' }
+        );
+        if (!res.ok || !data.device?.apiKey) {
+          alert(data.message || 'Gagal mengambil API key');
+          return;
+        }
+        document.getElementById('keyReveal').classList.remove('hidden');
+        document.getElementById('keyFull').textContent = data.device.apiKey;
+        document.getElementById('keyMasked').textContent = data.device.apiKeyMasked;
+        const ok = await copyToClipboard(data.device.apiKey);
+        const status = document.getElementById('copyKeyStatus');
+        status.textContent = ok
+          ? 'API key tersalin ke clipboard.'
+          : 'Key ditampilkan — salin manual jika perlu.';
+        status.style.color = ok ? 'var(--green)' : 'var(--amber)';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Salin Key';
+      }
+    }
+
     async function regenKey() {
       if (!selectedDeviceId || !confirm('Generate API key baru? Key lama langsung invalid.')) return;
       const { res, data } = await api(`/api/devices/${selectedDeviceId}/regenerate-key`, { method: 'POST' });
@@ -499,6 +566,12 @@
       document.getElementById('keyReveal').classList.remove('hidden');
       document.getElementById('keyFull').textContent = data.device.apiKey;
       document.getElementById('keyMasked').textContent = data.device.apiKeyMasked;
+      const ok = await copyToClipboard(data.device.apiKey);
+      const status = document.getElementById('copyKeyStatus');
+      status.textContent = ok
+        ? 'Key baru digenerate dan tersalin ke clipboard.'
+        : 'Key baru digenerate — salin sekarang.';
+      status.style.color = ok ? 'var(--green)' : 'var(--amber)';
     }
 
     async function deleteDevice() {

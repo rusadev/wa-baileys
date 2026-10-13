@@ -132,6 +132,17 @@ router.patch('/:id', (req, res) => {
   });
 });
 
+router.post('/:id/reveal-key', (req, res) => {
+  const device = findDeviceById(req.params.id);
+  if (!canAccessDevice(req.user, device)) {
+    return res.status(404).json({ success: false, message: 'Device tidak ditemukan' });
+  }
+  return res.json({
+    success: true,
+    device: serializeDevice(device, { revealKey: true }),
+  });
+});
+
 router.post('/:id/regenerate-key', (req, res) => {
   const device = findDeviceById(req.params.id);
   if (!canAccessDevice(req.user, device)) {
