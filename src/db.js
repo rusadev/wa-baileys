@@ -50,6 +50,9 @@ const deviceColumns = db.prepare(`PRAGMA table_info(devices)`).all().map((c) => 
 if (!deviceColumns.includes('webhook_url')) {
   db.exec(`ALTER TABLE devices ADD COLUMN webhook_url TEXT`);
 }
+if (!deviceColumns.includes('webhook_secret')) {
+  db.exec(`ALTER TABLE devices ADD COLUMN webhook_secret TEXT`);
+}
 
 export function userCount() {
   return db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
@@ -140,7 +143,15 @@ export function createDevice({ id, name, ownerUserId, apiKey }) {
 }
 
 export function updateDevice(id, fields) {
-  const allowed = ['name', 'api_key', 'phone', 'status', 'owner_user_id', 'webhook_url'];
+  const allowed = [
+    'name',
+    'api_key',
+    'phone',
+    'status',
+    'owner_user_id',
+    'webhook_url',
+    'webhook_secret',
+  ];
   const sets = [];
   const vals = [];
   for (const key of allowed) {

@@ -36,14 +36,18 @@ Endpoint yang sama (semua butuh `X-API-Key` device):
 - `POST /api/check-number`
 - `POST /api/logout`
 
-### Inbound webhook
+### Inbound webhook (per device)
 
-Saat pesan masuk (bukan `fromMe`), gateway POST JSON ke:
+Tiap device punya `webhook_url` + `webhook_secret` sendiri (bukan env global). Set via:
 
-1. `devices.webhook_url` (per device, set via `PATCH /api/devices/:id` body `{ "webhookUrl": "..." }`), atau
-2. env `WEBHOOK_URL` global
+```bash
+curl -X PATCH https://wa.rusabyte.co.id/api/devices/DEVICE_ID \
+  -H "Cookie: ..." \
+  -H "Content-Type: application/json" \
+  -d '{"webhookUrl":"https://app.example/api/internal/device-baileys-webhook","webhookSecret":"per-device-secret"}'
+```
 
-Header opsional: `X-Baiwa-Device-Webhook-Secret: $WEBHOOK_SECRET`
+Saat pesan masuk (bukan `fromMe`), gateway POST JSON ke `devices.webhook_url` saja. Header (jika secret terisi): `X-Baiwa-Device-Webhook-Secret: <devices.webhook_secret>`.
 
 Payload:
 

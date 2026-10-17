@@ -24,8 +24,6 @@ import {
 } from './db.js';
 import {
   AUTO_REPLY_PING,
-  WEBHOOK_URL,
-  WEBHOOK_SECRET,
   AUTO_UNIQUE_FOOTER,
   TYPING_DELAY_MIN_MS,
   TYPING_DELAY_MAX_MS,
@@ -504,13 +502,16 @@ class DeviceManager {
               );
             }
             const deviceRow = findDeviceById(deviceId);
-            const webhookUrl =
-              (deviceRow?.webhook_url && String(deviceRow.webhook_url).trim()) ||
-              WEBHOOK_URL;
+            const webhookUrl = deviceRow?.webhook_url
+              ? String(deviceRow.webhook_url).trim()
+              : '';
             if (webhookUrl) {
               const headers = { 'Content-Type': 'application/json' };
-              if (WEBHOOK_SECRET) {
-                headers['X-Baiwa-Device-Webhook-Secret'] = WEBHOOK_SECRET;
+              const webhookSecret = deviceRow?.webhook_secret
+                ? String(deviceRow.webhook_secret).trim()
+                : '';
+              if (webhookSecret) {
+                headers['X-Baiwa-Device-Webhook-Secret'] = webhookSecret;
               }
               fetch(webhookUrl, {
                 method: 'POST',

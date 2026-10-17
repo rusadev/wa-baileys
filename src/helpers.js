@@ -6,8 +6,6 @@ export const TYPING_DELAY_MAX_MS = Number(process.env.TYPING_DELAY_MAX_MS) || 22
 export const QUEUE_COOLDOWN_MIN_MS = Number(process.env.QUEUE_COOLDOWN_MIN_MS) || 2000;
 export const QUEUE_COOLDOWN_MAX_MS = Number(process.env.QUEUE_COOLDOWN_MAX_MS) || 4000;
 export const AUTO_REPLY_PING = process.env.AUTO_REPLY_PING !== 'false';
-export const WEBHOOK_URL = process.env.WEBHOOK_URL || '';
-export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
 
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

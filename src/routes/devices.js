@@ -32,7 +32,10 @@ function maskKey(apiKey) {
   return `${apiKey.slice(0, 6)}…${apiKey.slice(-4)}`;
 }
 
-function serializeDevice(device, { revealKey = false, runtime = null } = {}) {
+function serializeDevice(
+  device,
+  { revealKey = false, revealWebhookSecret = false, runtime = null } = {}
+) {
   const status = runtime || deviceManager.getStatus(device.id);
   return {
     id: device.id,
@@ -45,6 +48,10 @@ function serializeDevice(device, { revealKey = false, runtime = null } = {}) {
     apiKeyMasked: maskKey(device.api_key),
     apiKey: revealKey ? device.api_key : undefined,
     webhookUrl: device.webhook_url || null,
+    webhookSecretMasked: device.webhook_secret
+      ? maskKey(device.webhook_secret)
+      : null,
+    webhookSecret: revealWebhookSecret ? device.webhook_secret || null : undefined,
     qr: status.qr || null,
     user: status.user || null,
     queue: status.queue || null,
@@ -135,16 +142,26 @@ router.patch('/:id', (req, res) => {
     fields.webhook_url =
       raw === null || raw === '' ? null : String(raw).trim();
   }
+  let revealWebhookSecret = false;
+  if (
+    req.body?.webhookSecret !== undefined ||
+    req.body?.webhook_secret !== undefined
+  ) {
+    const raw = req.body.webhookSecret ?? req.body.webhook_secret;
+    fields.webhook_secret =
+      raw === null || raw === '' ? null : String(raw).trim();
+    revealWebhookSecret = Boolean(fields.webhook_secret);
+  }
   if (!Object.keys(fields).length) {
     return res.status(400).json({
       success: false,
-      message: 'Tidak ada field yang diubah (name, webhookUrl).',
+      message: 'Tidak ada field yang diubah (name, webhookUrl, webhookSecret).',
     });
   }
   const updated = updateDevice(device.id, fields);
   return res.json({
     success: true,
-    device: serializeDevice(updated),
+    device: serializeDevice(updated, { revealWebhookSecret }),
   });
 });
 
