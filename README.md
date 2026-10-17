@@ -36,6 +36,29 @@ Endpoint yang sama (semua butuh `X-API-Key` device):
 - `POST /api/check-number`
 - `POST /api/logout`
 
+### Inbound webhook
+
+Saat pesan masuk (bukan `fromMe`), gateway POST JSON ke:
+
+1. `devices.webhook_url` (per device, set via `PATCH /api/devices/:id` body `{ "webhookUrl": "..." }`), atau
+2. env `WEBHOOK_URL` global
+
+Header opsional: `X-Baiwa-Device-Webhook-Secret: $WEBHOOK_SECRET`
+
+Payload:
+
+```json
+{
+  "deviceId": "<uuid>",
+  "id": "<wa-message-id>",
+  "from": "62812...",
+  "jid": "62812...@s.whatsapp.net",
+  "pushName": "...",
+  "message": "teks",
+  "timestamp": 1710000000
+}
+```
+
 ## Menjalankan lokal
 
 ```bash

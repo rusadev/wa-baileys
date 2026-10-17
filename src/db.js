@@ -45,6 +45,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessions_expired ON sessions(expired);
 `);
 
+/** Lightweight additive migrations for existing SQLite files. */
+const deviceColumns = db.prepare(`PRAGMA table_info(devices)`).all().map((c) => c.name);
+if (!deviceColumns.includes('webhook_url')) {
+  db.exec(`ALTER TABLE devices ADD COLUMN webhook_url TEXT`);
+}
+
 export function userCount() {
   return db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
 }
@@ -134,7 +140,7 @@ export function createDevice({ id, name, ownerUserId, apiKey }) {
 }
 
 export function updateDevice(id, fields) {
-  const allowed = ['name', 'api_key', 'phone', 'status', 'owner_user_id'];
+  const allowed = ['name', 'api_key', 'phone', 'status', 'owner_user_id', 'webhook_url'];
   const sets = [];
   const vals = [];
   for (const key of allowed) {

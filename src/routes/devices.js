@@ -44,6 +44,7 @@ function serializeDevice(device, { revealKey = false, runtime = null } = {}) {
     status: status.status || device.status,
     apiKeyMasked: maskKey(device.api_key),
     apiKey: revealKey ? device.api_key : undefined,
+    webhookUrl: device.webhook_url || null,
     qr: status.qr || null,
     user: status.user || null,
     queue: status.queue || null,
@@ -121,11 +122,26 @@ router.patch('/:id', (req, res) => {
   if (!canAccessDevice(req.user, device)) {
     return res.status(404).json({ success: false, message: 'Device tidak ditemukan' });
   }
-  const name = String(req.body?.name || '').trim();
-  if (!name) {
-    return res.status(400).json({ success: false, message: 'Nama wajib diisi' });
+  const fields = {};
+  if (req.body?.name !== undefined) {
+    const name = String(req.body.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Nama wajib diisi' });
+    }
+    fields.name = name;
   }
-  const updated = updateDevice(device.id, { name });
+  if (req.body?.webhookUrl !== undefined || req.body?.webhook_url !== undefined) {
+    const raw = req.body.webhookUrl ?? req.body.webhook_url;
+    fields.webhook_url =
+      raw === null || raw === '' ? null : String(raw).trim();
+  }
+  if (!Object.keys(fields).length) {
+    return res.status(400).json({
+      success: false,
+      message: 'Tidak ada field yang diubah (name, webhookUrl).',
+    });
+  }
+  const updated = updateDevice(device.id, fields);
   return res.json({
     success: true,
     device: serializeDevice(updated),

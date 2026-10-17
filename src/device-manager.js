@@ -25,6 +25,7 @@ import {
 import {
   AUTO_REPLY_PING,
   WEBHOOK_URL,
+  WEBHOOK_SECRET,
   AUTO_UNIQUE_FOOTER,
   TYPING_DELAY_MIN_MS,
   TYPING_DELAY_MAX_MS,
@@ -502,10 +503,18 @@ class DeviceManager {
                 { quoted: msg }
               );
             }
-            if (WEBHOOK_URL) {
-              fetch(WEBHOOK_URL, {
+            const deviceRow = findDeviceById(deviceId);
+            const webhookUrl =
+              (deviceRow?.webhook_url && String(deviceRow.webhook_url).trim()) ||
+              WEBHOOK_URL;
+            if (webhookUrl) {
+              const headers = { 'Content-Type': 'application/json' };
+              if (WEBHOOK_SECRET) {
+                headers['X-Baiwa-Device-Webhook-Secret'] = WEBHOOK_SECRET;
+              }
+              fetch(webhookUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                   deviceId,
                   id: msg.key.id,
